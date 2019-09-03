@@ -9,10 +9,7 @@ import os
 import sys
 import csv
 import copy
-import requests
-from random import choice
 from proxy_github import getProxy
-from html.parser import HTMLParser
 from getPoiComments_id import getPoiComments_id
 
 

@@ -5,12 +5,42 @@
 @Description: 
 """
 
-from random import choice
-from proxy_github import getProxy
-from urllib import request, parse
-from html.parser import HTMLParser
+import threading
 from paras import header_useragent
+from urllib import request
+from random import choice
+from html.parser import HTMLParser
+from proxy_github import getProxy
 
+
+# 继承父类 threading.Thread
+class myThread(threading.Thread):
+    def __init__(self, threadID, name, counter, url, ip_list):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.counter = counter
+        self.url = url
+        self.ip_list = ip_list
+
+    # 把要执行的代码写到 run 函数里面 线程在创建后会直接运行 run 函数
+    def run(self):
+        print("Starting " + self.name)
+        links = get(self.url, self.ip_list)
+        print(links)
+        print("Exiting " + self.name)
+        return links
+
+def get(post_url, ip_list):
+    param = {}
+    opener, req = prepare_request(param, ip_list, post_url)
+    response = opener.open(req)
+    res_text = response.read().decode('utf-8')
+    hp = MyHTMLParser()
+    hp.feed(res_text)
+    hp.close()
+    links = hp.links
+    return links
 
 class MyHTMLParser(HTMLParser):
     def __init__(self):
@@ -64,20 +94,38 @@ def getPoiComments_id(base_url, ip_list):
     page = 1
     comments_id = []
 
-    while page < 2:
+    page_num = 30
+    threading_num = 10
+    post_url_pool = []
+    while page < page_num:
         num = (page - 1) * 10
         post_url = origin + base_sec[0] + "-Reviews-or" + str(num) + base_sec[0]
-        opener, req = prepare_request(param, ip_list, post_url)
-        response = opener.open(req)
-        res_text = response.read().decode('utf-8')
-        hp = MyHTMLParser()
-        hp.feed(res_text)
-        hp.close()
-        print(hp.links)
-        if len(hp.links) == 0:
-            break
-        comments_id.extend(hp.links)
-        print(len(comments_id))
+        if len(post_url_pool) < threading_num or page == page_num - 1:
+            post_url_pool.append(post_url)
+            continue
+
+        thread_pool = []
+        thread_result = []
+
+        i = 0
+        for item in post_url_pool:
+            thread_pool.append(myThread(i, "Thread-" + str(i), i, item, ip_list))
+            thread_result.append("")
+            i += 1
+        # 清空准备输送给线程的url
+        post_url_pool = []
+
+        i = 0
+        for thread in thread_pool:
+            thread_result[i] = thread.start()
+            i += 1
+
+        for result in thread_result:
+            print(result)
+            if len(result) == 0:
+                break
+            comments_id.extend(result)
+            print(len(comments_id))
         page += 1
 
     return comments_id
