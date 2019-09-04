@@ -71,7 +71,7 @@ class myThread(threading.Thread):
 
 
 def get(post_url, ip):
-    response = requests.get(post_url, proxies=ip, timeout=20)
+    response = requests.get(post_url, proxies=ip, timeout=10)
     html_code = response.text
     hp = MyHTMLParser()
     hp.feed(html_code)
@@ -162,28 +162,13 @@ def get_starter(init_file_path, file_path):
     return list_loc
 
 
-def get_comments(initFilePath, filePath):
+def get_comments(initFilePath, filePath, ip_num):
     list_loc = get_starter(initFilePath, filePath)
     total_number = len(list_loc)
 
-    ip_list = getProxy(10)
+    ip_list = getProxy(ip_num)
 
     url_base = "https://cn.tripadvisor.com/OverlayWidgetAjax?Mode=EXPANDED_SUR_REVIEWS_RESP&metaReferer=ShowUserReviewsAttractions&reviewId="
-
-    # for i in range(total_number):
-    #     with open(filePath, 'a+', newline='', encoding='utf-8-sig') as csvfile:
-    #         writer = csv.writer(csvfile)
-    #         url = url_base + list_loc[i][2][1:]
-    #         response = requests.get(url, proxies=proxies)
-    #         html_code = response.text
-    #         hp = MyHTMLParser()
-    #         hp.feed(html_code)
-    #         hp.close()
-    #         title = hp.title
-    #         content = hp.content
-    #         print("title: {}".format(title))
-    #         print("content: {}".format(content))
-    #         writer.writerow([list_loc[i][0], list_loc[i][1], list_loc[i][2], title, content])
 
     threading_num = len(ip_list)
     post_url_pool = []
@@ -193,12 +178,12 @@ def get_comments(initFilePath, filePath):
         if len(post_url_pool) < threading_num and i != total_number - 1:
             post_url_pool.append(url)
             infor_pool.append((list_loc[i][0], list_loc[i][1], list_loc[i][2]))
-            print("准备爬取第 {} 个的评论全文".format(i))
+            print("准备爬取第 {} 个的评论全文 共有 {} 个评论".format(i, total_number))
             continue
 
         # 最后一页既要进url池，又要启动线程
         if i == total_number - 1:
-            print("准备爬取第 {} 个的评论全文".format(i))
+            print("准备爬取第 {} 个的评论全文 共有 {} 个评论".format(i, total_number))
             post_url_pool.append(url)
 
         threads = multi_threading(post_url_pool, ip_list)
@@ -206,17 +191,23 @@ def get_comments(initFilePath, filePath):
         with open(filePath, 'a+', newline='', encoding='utf-8-sig') as csvfile:
             writer = csv.writer(csvfile)
             num = 0
+            change_ip = False
             for thread in threads:
-                (title, content) = thread.get_result()
-                print("title: {}".format(title))
-                print("content: {}".format(content))
-                writer.writerow(
-                    [infor_pool[num][0], infor_pool[num][1], infor_pool[num][2], title, content])
+                try:
+                    (title, content) = thread.get_result()
+                    print("title: {}".format(title))
+                    # print("content: {}".format(content))
+                    writer.writerow([infor_pool[num][0], infor_pool[num][1], infor_pool[num][2], title, content])
+                except Exception as e:
+                    print("[Get_List]Error ", e)
+                    change_ip = True
                 num += 1
+            if change_ip:
+                ip_list = getProxy(ip_num)
 
         # 准备下一次输送给线程的url
         if i != total_number - 1:
-            print("准备爬从第 {} 页开始的评论".format(i))
+            print("准备爬取第 {} 个的评论全文 共有 {} 个评论".format(i, total_number))
             post_url_pool = [url]
             infor_pool = [(list_loc[i][0], list_loc[i][1], list_loc[i][2])]
 
@@ -225,4 +216,5 @@ if __name__ == "__main__":
     city_id = "g60763"
     comment_id_path = "./data/" + city_id + "_comment_id.csv"
     comment_path = "./data/" + city_id + "_comment_all.csv"
-    get_comments(comment_id_path, comment_path)
+    ip_num = 15
+    get_comments(comment_id_path, comment_path, ip_num)
