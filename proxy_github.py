@@ -39,7 +39,7 @@ def getProxy(num):
         proxy = get_proxy(host, port, type)
         try:
             # telnetlib.Telnet(ip, port=port, timeout=20)
-            requests.get('http://www.baidu.cn/', proxies=proxy)
+            requests.get('https://cn.tripadvisor.com/', proxies=proxy, timeout=10)
         except:
             print('[Get_IP]Failed IP.')
         else:
