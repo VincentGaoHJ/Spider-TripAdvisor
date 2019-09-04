@@ -216,5 +216,5 @@ if __name__ == "__main__":
     city_id = "g60763"
     comment_id_path = "./data/" + city_id + "_comment_id.csv"
     comment_path = "./data/" + city_id + "_comment_all.csv"
-    ip_num = 15
+    ip_num = 30
     get_comments(comment_id_path, comment_path, ip_num)
