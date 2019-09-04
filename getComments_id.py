@@ -83,7 +83,7 @@ def get_starter(init_file_path, file_path):
 def get_comments(initFilePath, filePath):
     list_loc = get_starter(initFilePath, filePath)
     total_number = len(list_loc)
-    ip_list = getProxy()
+    ip_list = getProxy(10)
     print("[Get_List]The valid IP: ", ip_list)
 
     for i in range(total_number):

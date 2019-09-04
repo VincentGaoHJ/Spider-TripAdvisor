@@ -112,7 +112,7 @@ def get_comments(initFilePath, filePath):
     list_loc = get_starter(initFilePath, filePath)
     total_number = len(list_loc)
 
-    ip_list = getProxy()
+    ip_list = getProxy(2)
     proxies = choice(ip_list)
 
     url_base = "https://cn.tripadvisor.com/OverlayWidgetAjax?Mode=EXPANDED_SUR_REVIEWS_RESP&metaReferer=ShowUserReviewsAttractions&reviewId="
